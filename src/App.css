@@ -1,0 +1,174 @@
+/* Root container */
+#app {
+  height: 100vw;
+  width: 100vw;
+  margin: 0 auto;
+  padding: 2rem 2rem 1rem; /* Adjust padding to reduce space at the top */
+  text-align: center;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
+  background-color: black; /* Set background to black */
+  color: white;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  background-color: black;
+  color: white;
+  font-family: "Comic Sans MS", cursive;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+
+
+/* Heading styles */
+h1 {
+  font-size: 2.5rem;
+  color: white;
+  margin-bottom: 0.5rem; /* Reduce the margin at the bottom of the heading */
+}
+
+/* Styling the task form */
+.task-form {
+  margin-bottom: 1rem; /* Reduce margin between the form and the task list */
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.task-form input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 250px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.task-form input:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.task-form button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.task-form button:hover {
+  background-color: #45a049;
+}
+
+/* Styling for the task list */
+.task-list {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.task-item {
+  background-color: #f9f9f9;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px; /* Limit task width */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: add shadow for style */
+}
+
+.task-item span {
+  font-size: 1.1rem;
+  color: inherit;
+  flex-grow: 1;
+  word-wrap: break-word;
+  text-align: left;
+
+}
+
+.task-item button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.9rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.task-item button:hover {
+  background-color: #e53935;
+}
+
+/* Task list animation styles */
+.task-enter {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.task-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms, transform 500ms;
+}
+
+.task-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.task-exit-active {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 500ms, transform 500ms;
+}
+
+/* Styling for the add task button */
+.add-task-button {
+  font-size: 3rem;
+  padding: 0.5rem 1rem;
+  width: 60px;
+  height: 60px;
+  border: none;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-task-button:hover {
+  background-color: #45a049;
+}
+
+/* Styling for the color picker */
+.color-picker {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.color-picker input {
+  width: 50px;
+  height: 30px;
+  border: none;
+  cursor: pointer;
+}
+
+

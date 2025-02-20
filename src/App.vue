@@ -1,47 +1,99 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <div class="App">
+    <h1>Task Manager v1.0</h1>
+    <div class="task-form">
+      <input
+          type="text"
+          v-model="newTask"
+          placeholder="Enter a new task"
+      />
+      <button @click="handleAddTask" class="add-task-button">
+        <font-awesome-icon :icon="['fas', 'plus']" size="2x" />
+      </button>
     </div>
-  </header>
 
-  <main>
-    <TheWelcome />
-  </main>
+    <div class="color-picker">
+      <label for="bg-color">Pick a background color for the tasks:</label>
+      <input
+          type="color"
+          id="bg-color"
+          v-model="bgColor"
+      />
+    </div>
+
+    <ul class="task-list">
+      <transition-group name="task">
+        <li
+            v-for="(task, index) in tasks"
+            :key="index"
+            class="task-item"
+            :style="{ backgroundColor: task.bgColor,
+             color: getContrastColor(task.bgColor) }"
+        >
+          <span>{{ task.task }}</span>
+          <button @click="handleRemoveTask(index)">
+            <font-awesome-icon :icon="['fas', 'minus']" size="2x" />
+          </button>
+        </li>
+      </transition-group>
+    </ul>
+  </div>
 </template>
 
+<script>
+import { ref } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
+export default {
+  name: 'App',
+  components: { FontAwesomeIcon },
+  setup() {
+    const newTask = ref('');
+    const bgColor = ref('#f9f9f9');
+    const tasks = ref([]);
+
+    const getContrastColor = (hex) => {
+      //hex to rgb
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+
+      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      if (luminance < 120) {
+        // Lighten text for dark backgrounds
+        return '#FFFFE0'; // Light yellowish-white for better contrast
+      } else if (luminance < 180) {
+        // Slightly lighter gray for medium-dark backgrounds
+        return '#FFFFFF';
+      } else {
+        // Dark text for light backgrounds
+        return '#000000';
+      }
+    }
+
+
+
+    const handleAddTask = () => {
+      if (newTask.value.trim()) {
+        tasks.value.push({ task: newTask.value, bgColor: bgColor.value });
+        newTask.value = '';
+      }
+    };
+
+    const handleRemoveTask = (index) => {
+      tasks.value.splice(index, 1);
+    };
+
+
+
+
+    return { newTask, bgColor, tasks, getContrastColor, handleAddTask, handleRemoveTask };
+  }
+};
+</script>
+
 <style scoped>
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
+/* Importing App.css styles */
+@import './App.css';
 </style>
