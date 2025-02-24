@@ -87,7 +87,12 @@ h1 {
   align-items: center;
   width: 100%;
   max-width: 600px; /* Limit task width */
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: add shadow for style */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  cursor: grab;
+}
+
+.task-item:active {
+  cursor: grabbing;
 }
 
 .task-item span {

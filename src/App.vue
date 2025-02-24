@@ -1,6 +1,6 @@
 <template>
   <div class="App">
-    <h1>Task Manager v1.0</h1>
+    <h1>Simple Task Manager v1.0</h1>
     <div class="task-form">
       <input
           type="text"
@@ -27,8 +27,13 @@
             v-for="(task, index) in tasks"
             :key="index"
             class="task-item"
-            :style="{ backgroundColor: task.bgColor,
-             color: getContrastColor(task.bgColor) }"
+            :style="{ backgroundColor: task.bgColor, color: getContrastColor(task.bgColor) }"
+            draggable="true"
+            @dragstart="handleDragStart(index)"
+            @dragend="handleDragEnd"
+            @dragover="handleDragOver($event, index)"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop(index)"
         >
           <span>{{ task.task }}</span>
           <button @click="handleRemoveTask(index)">
@@ -51,6 +56,7 @@ export default {
     const newTask = ref('');
     const bgColor = ref('#f9f9f9');
     const tasks = ref([]);
+    const draggedTaskIndex = ref(null);
 
     const getContrastColor = (hex) => {
       //hex to rgb
@@ -70,9 +76,7 @@ export default {
         // Dark text for light backgrounds
         return '#000000';
       }
-    }
-
-
+    };
 
     const handleAddTask = () => {
       if (newTask.value.trim()) {
@@ -85,11 +89,35 @@ export default {
       tasks.value.splice(index, 1);
     };
 
+    const handleDragStart = (index) => {
+      draggedTaskIndex.value = index;
+    };
 
+    const handleDragOver = (event) => {
+      event.preventDefault();
+    };
 
+    const handleDrop = (index) => {
+      if (draggedTaskIndex.value !== null) {
+        const draggedTask = tasks.value[draggedTaskIndex.value];
+        tasks.value.splice(draggedTaskIndex.value, 1);
+        tasks.value.splice(index, 0, draggedTask);
+        draggedTaskIndex.value = null;
+      }
+    };
 
-    return { newTask, bgColor, tasks, getContrastColor, handleAddTask, handleRemoveTask };
-  }
+    return {
+      newTask,
+      bgColor,
+      tasks,
+      getContrastColor,
+      handleAddTask,
+      handleRemoveTask,
+      handleDragStart,
+      handleDragOver,
+      handleDrop,
+    };
+  } //end of setup
 };
 </script>
 
