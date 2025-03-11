@@ -1,127 +1,178 @@
 <template>
   <div class="App">
-    <h1>Simple Task Manager v1.0</h1>
-    <div class="task-form">
-      <input
-          type="text"
-          v-model="newTask"
-          placeholder="Enter a new task"
-      />
-      <button @click="handleAddTask" class="add-task-button">
-        <font-awesome-icon :icon="['fas', 'plus']" size="2x" />
+    <!--theme toggle -->
+    <div class="theme-toggle-container">
+      <button @click="toggleTheme" class="theme-toggle">
+        <font-awesome-icon v-if="isDarkTheme" :icon="['fas', 'sun']" />
+        <font-awesome-icon v-else :icon="['fas', 'moon']" />
       </button>
     </div>
 
-    <div class="color-picker">
-      <label for="bg-color">Pick a background color for the tasks:</label>
-      <input
-          type="color"
-          id="bg-color"
-          v-model="bgColor"
-      />
-    </div>
+    <h1>Simple Task Manager v2.0</h1>
 
+    <!-- Import and use your new TaskForm component -->
+    <TaskForm
+        @add-task="addTask"
+        :taskToEdit="taskToEdit"
+        @cancel="taskToEdit = null"
+        @update-task="updateTask"
+    />
+
+    <!-- Task list container -->
     <ul class="task-list">
       <transition-group name="task">
-        <li
+        <!-- Import and use your new Task component -->
+        <Task
             v-for="(task, index) in tasks"
-            :key="index"
-            class="task-item"
-            :style="{ backgroundColor: task.bgColor, color: getContrastColor(task.bgColor) }"
-            draggable="true"
-            @dragstart="handleDragStart(index)"
+            :key="task.id || index"
+            :task="task"
+            @toggle-complete="toggleComplete"
+            @edit="editTask"
+            @delete="removeTask"
+            @dragstart="handleDragStart($event, index)"
             @dragend="handleDragEnd"
-            @dragover="handleDragOver($event, index)"
-            @dragleave="handleDragLeave"
-            @drop="handleDrop(index)"
-        >
-          <span>{{ task.task }}</span>
-          <button @click="handleRemoveTask(index)">
-            <font-awesome-icon :icon="['fas', 'minus']" size="2x" />
-          </button>
-        </li>
+            @dragover.prevent
+            @drop="handleDrop($event, index)"
+        />
       </transition-group>
     </ul>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref, onMounted } from 'vue';
+import Task from './components/Task.vue';
+import TaskForm from './components/TaskForm.vue';
 
 export default {
   name: 'App',
-  components: { FontAwesomeIcon },
+  components: {
+    Task,
+    TaskForm
+  },
   setup() {
-    const newTask = ref('');
-    const bgColor = ref('#f9f9f9');
     const tasks = ref([]);
+    const taskToEdit = ref(null);
     const draggedTaskIndex = ref(null);
 
-    const getContrastColor = (hex) => {
-      //hex to rgb
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
+    // Load tasks from localStorage if available
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+      tasks.value = JSON.parse(savedTasks);
+    }
 
-      const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+    // Save tasks to localStorage
+    const saveTasks = () => {
+      localStorage.setItem('tasks', JSON.stringify(tasks.value));
+    };
 
-      if (luminance < 120) {
-        // Lighten text for dark backgrounds
-        return '#FFFFE0'; // Light yellowish-white for better contrast
-      } else if (luminance < 180) {
-        // Slightly lighter gray for medium-dark backgrounds
-        return '#FFFFFF';
-      } else {
-        // Dark text for light backgrounds
-        return '#000000';
+    const addTask = (newTask) => {
+      tasks.value.push(newTask);
+      saveTasks();
+    };
+
+    const updateTask = (updatedTask) => {
+      const index = tasks.value.findIndex(t => t.id === updatedTask.id);
+      if (index !== -1) {
+        tasks.value[index] = updatedTask;
+        saveTasks();
+      }
+      taskToEdit.value = null;
+    };
+
+    const removeTask = (id) => {
+      tasks.value = tasks.value.filter(task => task.id !== id);
+      saveTasks();
+    };
+
+    const toggleComplete = (id) => {
+      const task = tasks.value.find(task => task.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        saveTasks();
       }
     };
 
-    const handleAddTask = () => {
-      if (newTask.value.trim()) {
-        tasks.value.push({ task: newTask.value, bgColor: bgColor.value });
-        newTask.value = '';
-      }
+    const editTask = (id) => {
+      taskToEdit.value = tasks.value.find(task => task.id === id);
     };
 
-    const handleRemoveTask = (index) => {
-      tasks.value.splice(index, 1);
-    };
-
-    const handleDragStart = (index) => {
+    const handleDragStart = (event, index) => {
       draggedTaskIndex.value = index;
     };
 
-    const handleDragOver = (event) => {
-      event.preventDefault();
+    const handleDragEnd = () => {
+      // Optional handling for drag end
     };
 
-    const handleDrop = (index) => {
+    const handleDrop = (event, index) => {
       if (draggedTaskIndex.value !== null) {
         const draggedTask = tasks.value[draggedTaskIndex.value];
         tasks.value.splice(draggedTaskIndex.value, 1);
         tasks.value.splice(index, 0, draggedTask);
         draggedTaskIndex.value = null;
+        saveTasks();
       }
     };
 
-    return {
-      newTask,
-      bgColor,
-      tasks,
-      getContrastColor,
-      handleAddTask,
-      handleRemoveTask,
-      handleDragStart,
-      handleDragOver,
-      handleDrop,
+    // Define isDarkTheme as a reactive property
+    const isDarkTheme = ref(false);
+
+    // Load theme preference on component mount
+    onMounted(() => {
+      const darkTheme = localStorage.getItem('darkTheme') === 'true';
+      if (darkTheme) {
+        document.body.classList.add('dark-theme');
+        isDarkTheme.value = true;
+      }
+    });
+
+    const toggleTheme = () => {
+      document.body.classList.toggle('dark-theme');
+      isDarkTheme.value = !isDarkTheme.value;
+      localStorage.setItem('darkTheme', isDarkTheme.value);
     };
-  } //end of setup
+
+
+    return {
+      tasks,
+      taskToEdit,
+      addTask,
+      updateTask,
+      removeTask,
+      toggleComplete,
+      editTask,
+      handleDragStart,
+      handleDragEnd,
+      handleDrop,
+      isDarkTheme,
+      toggleTheme
+    };
+  }
 };
+
+
+// In your component or global script
+function toggleTheme() {
+  document.body.classList.toggle('dark-theme');
+  // Optionally save preference to localStorage
+  const isDarkTheme = document.body.classList.contains('dark-theme');
+  localStorage.setItem('darkTheme', isDarkTheme);
+}
+
+// Load saved theme preference
+function loadThemePreference() {
+  const darkTheme = localStorage.getItem('darkTheme') === 'true';
+  if (darkTheme) {
+    document.body.classList.add('dark-theme');
+  }
+}
+
+// Call this when your app initializes
+loadThemePreference();
+
 </script>
 
 <style scoped>
-/* Importing App.css styles */
-@import './App.css';
+@import './styles/modern-styles.css';
 </style>
