@@ -525,12 +525,6 @@ body.dark-theme .task-description {
     color: var(--gray-400);
 }
 
-body.dark-theme .task-item {
-    color: var(--text-color) !important; /* Light text for dark theme */
-    background-color: var(--card-bg) !important; /* Dark background for dark theme */
-    border-left: 5px solid;
-    border-left-color: inherit;
-}
 
 body.dark-theme .task-item.dark-bg::after {
     display: none;
@@ -551,7 +545,7 @@ body.dark-theme .task-item[style*="background-color"]::after {
     width: calc(100% - 5px);
     height: 100%;
     background-color: inherit;
-    opacity: 0.1;
+    opacity: 0.3;
     pointer-events: none;
     z-index: 0;
 }
@@ -586,6 +580,17 @@ body.dark-theme .task-item.completed::after {
 body.dark-theme .task-item::before {
     display: none;
 }
+
+body.dark-theme .task-item:not([style*="background-color"]){
+    color: var(--text-color);
+    background-color: var(--card-bg);
+}
+
+body.dark-theme .task-item {
+    border-left: 5px solid;
+    border-left-color: inherit;
+}
+
 
 .task-footer {
     display: flex;
