@@ -8,36 +8,43 @@
       </button>
     </div>
 
-    <h1>Simple Task Manager v2.0</h1>
+    <h1>Simple Task Manager v2.5</h1>
 
-    <!-- Import and use your new TaskForm component -->
-    <TaskForm
-        @add-task="addTask"
-        :taskToEdit="taskToEdit"
-        @cancel="taskToEdit = null"
-        @update-task="updateTask"
-    />
-
-    <!-- Task list container -->
-    <ul class="task-list">
-      <transition-group name="task">
-        <!-- Import and use your new Task component -->
-        <Task
-            v-for="(task, index) in tasks"
-            :key="task.id || index"
-            :task="task"
-            @toggle-complete="toggleComplete"
-            @edit="editTask"
-            @delete="removeTask"
-            @dragstart="handleDragStart($event, index)"
-            @dragend="handleDragEnd"
-            @dragover.prevent
-            @drop="handleDrop($event, index)"
+    <div class="task-layout">
+      <!-- Split into left and right sides -->
+      <!-- Left side -->
+      <div class="task-form-wrapper">
+        <TaskForm
+            @add-task="addTask"
+            :taskToEdit="taskToEdit"
+            @cancel="taskToEdit = null"
+            @update-task="updateTask"
         />
-      </transition-group>
-    </ul>
+      </div>
+
+      <!-- Right Side -->
+      <div class="task-list-wrapper">
+        <ul class="task-list">
+          <transition-group name="task">
+            <Task
+                v-for="(task, index) in tasks"
+                :key="task.id || index"
+                :task="task"
+                @toggle-complete="toggleComplete"
+                @edit="editTask"
+                @delete="removeTask"
+                @dragstart="handleDragStart($event, index)"
+                @dragend="handleDragEnd"
+                @dragover.prevent
+                @drop="handleDrop($event, index)"
+            />
+          </transition-group>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
+
 
 <script>
 import { ref, onMounted } from 'vue';
