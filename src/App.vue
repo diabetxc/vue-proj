@@ -157,29 +157,8 @@ export default {
     };
   }
 };
-
-
-// In your component or global script
-function toggleTheme() {
-  document.body.classList.toggle('dark-theme');
-  // Optionally save preference to localStorage
-  const isDarkTheme = document.body.classList.contains('dark-theme');
-  localStorage.setItem('darkTheme', isDarkTheme);
-}
-
-// Load saved theme preference
-function loadThemePreference() {
-  const darkTheme = localStorage.getItem('darkTheme') === 'true';
-  if (darkTheme) {
-    document.body.classList.add('dark-theme');
-  }
-}
-
-// Call this when your app initializes
-loadThemePreference();
-
 </script>
 
-<style scoped>
-@import './styles/modern-styles.css';
+<style>
+/* No need to import here as we're importing in main.js */
 </style>

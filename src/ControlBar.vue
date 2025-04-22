@@ -51,9 +51,21 @@ export default {
     const filter = ref(props.currentFilter);
     const sortOption = ref(props.currentSort);
 
-    const setFilter = (newFilter) => {}
+    const setFilter = (newFilter) => {
+      filter.value = newFilter;
+      emit('update-filter', newFilter);
+    };
+    
+    const setSort = () => {
+      emit('update-sort', sortOption.value);
+    };
+    
+    return {
+      filter,
+      sortOption,
+      setFilter,
+      setSort
+    };
   }
 }
-
-
 </script>
