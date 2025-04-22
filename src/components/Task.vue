@@ -7,8 +7,7 @@
       'light-bg': !isDarkBackground(task.bgColor)
     }"
     :style="{ 
-      backgroundColor: task.bgColor, 
-      color: getContrastColor(task.bgColor)
+      backgroundColor: task.bgColor
     }"
     draggable="true"
     @dragstart="$emit('dragstart', $event)"
@@ -99,15 +98,9 @@ export default{
       // Calculate luminance using RGB values
       const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
       
-      // This is the critical part - apply different thresholds for light/dark mode
-      if (this.isDarkMode) {
-        // In dark mode, we need a lower threshold for light text
-        // This ensures that even with light backgrounds we get dark text
-        return luminance > 0.4 ? '#000000' : '#FFFFFF';
-      } else {
-        // In light mode, standard threshold
-        return luminance > 0.5 ? '#000000' : '#FFFFFF';
-      }
+      // Use the same contrast logic regardless of theme
+      // If background is dark, use light text; if background is light, use dark text
+      return luminance > 0.5 ? '#000000' : '#FFFFFF';
     },
 
     isDarkBackground(hex) {
@@ -121,8 +114,8 @@ export default{
         const b = parseInt(hex.slice(5, 7), 16);
 
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        // Lower threshold for dark mode
-        return this.isDarkMode ? luminance <= 0.4 : luminance <= 0.5;
+        // Use consistent threshold regardless of theme
+        return luminance <= 0.5;
       } catch (e) {
         return this.isDarkMode;
       }
@@ -147,7 +140,6 @@ export default{
 <style scoped>
 .task-category-label {
   background-color: rgba(67, 97, 238, 0.1);
-  color: inherit; /* Use inherited color instead of fixed color */
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
@@ -166,36 +158,39 @@ body.dark-theme .task-category-label {
   background-color: rgba(67, 97, 238, 0.3);
 }
 
-/* Add these styles to further ensure text visibility */
-.light-bg.task-item {
-  color: #000000 !important;
-}
-
-.light-bg .task-title, 
-.light-bg .task-description,
-.light-bg .task-date {
-  color: #000000 !important;
-}
-
-.dark-bg.task-item {
-  color: #FFFFFF !important;
-}
-
-.dark-bg .task-title, 
+/* Force text colors based on background darkness */
+.dark-bg.task-item,
+.dark-bg .task-title,
 .dark-bg .task-description,
+.dark-bg .task-body p,
+.dark-bg .task-footer,
 .dark-bg .task-date {
   color: #FFFFFF !important;
 }
 
+.light-bg.task-item,
+.light-bg .task-title,
+.light-bg .task-description,
+.light-bg .task-body p,
+.light-bg .task-footer,
+.light-bg .task-date {
+  color: #000000 !important;
+}
+
 /* Improve visibility for task categories */
 .light-bg .task-category-label {
-  color: var(--primary);
+  color: var(--primary) !important;
   background-color: rgba(67, 97, 238, 0.1);
   font-weight: 600;
 }
 
 .dark-bg .task-category-label {
-  color: white;
+  color: white !important;
   background-color: rgba(67, 97, 238, 0.4);
+}
+
+/* Ensure task description text is visible */
+.task-body p {
+  color: inherit !important;
 }
 </style>
