@@ -52,36 +52,48 @@
         </div>
       </transition>
 
-      <!-- Step 4: Tags -->
+      <!-- Step 4: Task Color -->
       <transition name="form-field">
         <div v-if="currentStep >= 4" class="form-group">
-          <label for="task-tags">Tags (comma separated):</label>
-          <input
-              id="task-tags"
-              v-model="tagsInput"
-              placeholder="e.g. work, personal, urgent"
-              type="text"
-              @input="checkStepCompletion(4)"
-          />
-        </div>
-      </transition>
-
-      <!-- Step 5: Task Color -->
-      <transition name="form-field">
-        <div v-if="currentStep >= 5" class="form-group">
           <label for="task-color">Task Color:</label>
           <input
               id="task-color"
               v-model="taskData.bgColor"
               type="color"
-              @change="checkStepCompletion(5)"
+              @change="checkStepCompletion(4)"
           />
+        </div>
+      </transition>
+
+      <!-- Step 5: Category -->
+      <transition name="form-field">
+        <div v-if="currentStep >= 4" class="form-group">
+          <label for="task-category">Category:</label>
+          <div class="category-select">
+            <select id="task-category" v-model="taskData.category" @change="checkStepCompletion(4)">
+              <option value="">-- Select Category --</option>
+              <option v-for="category in categories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+            <div class="add-category">
+              <input 
+                type="text" 
+                v-model="newCategory" 
+                placeholder="New category"
+                v-if="showNewCategoryInput" 
+              />
+              <button type="button" class="btn-icon" @click="toggleNewCategoryInput">
+                <font-awesome-icon :icon="['fas', showNewCategoryInput ? 'check' : 'plus']" />
+              </button>
+            </div>
+          </div>
         </div>
       </transition>
 
       <!-- Form Actions -->
       <transition name="form-field">
-        <div v-if="currentStep >= 5 || editMode" class="form-actions">
+        <div v-if="currentStep >= 4 || editMode" class="form-actions">
           <button class="btn-secondary" type="button" @click="resetForm">
             Cancel
           </button>
@@ -96,7 +108,7 @@
         <div :style="{ width: progressPercent + '%' }" class="progress-bar"></div>
         <div class="progress-steps">
           <span
-              v-for="step in 5"
+              v-for="step in 4"
               :key="step"
               :class="{ 'active': currentStep >= step, 'completed': currentStep > step }"
               class="progress-step">
@@ -109,7 +121,7 @@
 </template>
 
 <script>
-import {computed, reactive, ref, watch} from 'vue';
+import {computed, reactive, ref, watch, onMounted} from 'vue';
 
 export default {
   props: {
@@ -119,22 +131,39 @@ export default {
     }
   },
   setup(props, {emit}) {
+    // Check dark mode
+    const isDarkMode = ref(document.body.classList.contains('dark-theme'));
+    
     const defaultTaskData = {
       title: '',
       description: '',
       dueDate: '',
       priority: '2', // medium by default
-      bgColor: '#f9f9f9',
+      bgColor: isDarkMode.value ? '#2a2a2a' : '#f9f9f9', // Different default color based on theme
       completed: false,
-      tags: []
+      category: ''
     };
+    
+    // Listen for theme changes
+    onMounted(() => {
+      window.addEventListener('themeChange', () => {
+        isDarkMode.value = document.body.classList.contains('dark-theme');
+        // Only update the bgColor if it's the default color
+        if (taskData.bgColor === '#f9f9f9' || taskData.bgColor === '#2a2a2a') {
+          taskData.bgColor = isDarkMode.value ? '#2a2a2a' : '#f9f9f9';
+        }
+      });
+    });
 
     const taskData = reactive({...defaultTaskData});
-    const tagsInput = ref('');
     const currentStep = ref(1);
+    const categories = ref(['Work', 'Personal', 'Shopping', 'Health']);
+    const newCategory = ref('');
+    const showNewCategoryInput = ref(false);
 
     const progressPercent = computed(() => {
-      return (currentStep.value / 5) * 100;
+      // Update to use 4 steps instead of 5
+      return (currentStep.value / 4) * 100;
     });
 
     const editMode = computed(() => !!props.taskToEdit);
@@ -144,12 +173,19 @@ export default {
       if (newValue) {
         // Populate with task data for editing
         Object.assign(taskData, newValue);
-        tagsInput.value = newValue.tags ? newValue.tags.join(', ') : '';
-        currentStep.value = 5; // Show all fields when editing
+        currentStep.value = 4; // Show all fields when editing (now 4 steps total)
       }
     }, {immediate: true});
 
-    // Check if we can advance to the next step
+    // Load categories from localStorage on component mount
+    onMounted(() => {
+      const savedCategories = localStorage.getItem('categories');
+      if (savedCategories) {
+        categories.value = JSON.parse(savedCategories);
+      }
+    });
+
+    // Update the step completion logic
     const checkStepCompletion = (step) => {
       if (editMode.value) {
         return; // Don't advance steps in edit mode
@@ -162,24 +198,15 @@ export default {
         // Always advance from description (optional)
         currentStep.value = 3;
       } else if (step === 3 && currentStep.value === 3) {
-        // Due date and priority can be advanced immediately
+        // Due date and priority can be advanced to color & category (now step 4)
         currentStep.value = 4;
-      } else if (step === 4 && currentStep.value === 4) {
-        // Tags are optional, advance to color
-        currentStep.value = 5;
       }
+      // Step 4 is now final (color & category)
     };
 
     const submitTask = () => {
-      // Parse tags from comma-separated string
-      const tags = tagsInput.value
-          .split(',')
-          .map(tag => tag.trim())
-          .filter(tag => tag !== '');
-
       const task = {
         ...taskData,
-        tags,
         id: editMode.value ? props.taskToEdit.id : Date.now().toString(),
         priority: Number(taskData.priority)
       };
@@ -193,22 +220,43 @@ export default {
       resetForm();
     };
 
+    // Update resetForm to use the correct default color based on current theme
     const resetForm = () => {
-      Object.assign(taskData, defaultTaskData);
-      tagsInput.value = '';
+      const currentDefaults = {
+        ...defaultTaskData,
+        bgColor: isDarkMode.value ? '#2a2a2a' : '#f9f9f9'
+      };
+      Object.assign(taskData, currentDefaults);
       currentStep.value = 1; // Reset to first step
       emit('cancel');
     };
 
+    const toggleNewCategoryInput = () => {
+      if (showNewCategoryInput.value && newCategory.value) {
+        // Add the new category if it doesn't exist already
+        if (!categories.value.includes(newCategory.value)) {
+          categories.value.push(newCategory.value);
+          taskData.category = newCategory.value;
+          localStorage.setItem('categories', JSON.stringify(categories.value));
+        }
+        newCategory.value = '';
+      }
+      showNewCategoryInput.value = !showNewCategoryInput.value;
+    };
+
     return {
       taskData,
-      tagsInput,
+      isDarkMode,
       editMode,
       currentStep,
       progressPercent,
       checkStepCompletion,
       submitTask,
-      resetForm
+      resetForm,
+      categories,
+      newCategory,
+      showNewCategoryInput,
+      toggleNewCategoryInput
     };
   }
 }
@@ -306,5 +354,23 @@ body.dark-theme .form-progress {
 .form-group.active select {
   border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+}
+
+/* Add this after your existing styles */
+/* Fix for priority dropdown */
+select {
+  -webkit-appearance: menulist; /* Force the dropdown arrow in WebKit browsers */
+  appearance: menulist; /* Standard */
+  height: auto;
+  min-height: 40px; /* Ensure enough height for the arrow */
+  padding-right: 25px; /* Make space for the arrow */
+  cursor: pointer;
+}
+
+/* Ensure proper sizing for all form controls */
+.form-group.half select,
+.form-group.half input {
+  width: 100%;
+  box-sizing: border-box;
 }
 </style>
