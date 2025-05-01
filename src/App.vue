@@ -1,101 +1,118 @@
 <template>
-  <div class="App">
-    <!-- Theme toggle button -->
-    <div class="theme-toggle-container">
-      <button @click="toggleTheme" class="theme-toggle">
+  <div class="app-container">
+    <!-- Header section with app title and theme toggle -->
+    <header class="app-header">
+      <h1>Task<span class="accent">Flow</span></h1>
+      <button @click="toggleTheme" class="theme-toggle" aria-label="Toggle theme">
         <font-awesome-icon v-if="isDarkTheme" :icon="['fas', 'sun']" />
         <font-awesome-icon v-else :icon="['fas', 'moon']" />
       </button>
-    </div>
+    </header>
 
-    <h1>Simple Task Manager v2.5</h1>
+    <!-- Main dashboard section -->
+    <div class="dashboard">
+      <!-- Dashboard header with search and stats -->
+      <div class="dashboard-header">
+        <div class="search-wrapper">
+          <font-awesome-icon :icon="['fas', 'search']" class="search-icon" />
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search tasks..." 
+            class="search-input"
+          />
+        </div>
+        
+        <!-- Task statistics cards -->
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-value">{{ taskStats.total }}</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ taskStats.pending }}</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-card completed">
+            <div class="stat-value">{{ taskStats.completed }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-value">{{ taskStats.highPriority }}</div>
+            <div class="stat-label">High Priority</div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Search functionality -->
-    <div class="search-container">
-      <input 
-        type="text" 
-        v-model="searchQuery" 
-        placeholder="Search tasks..." 
-        class="search-input"
+      <!-- Control bar with filters -->
+      <ControlBar 
+        :currentFilter="filter"
+        :currentSort="sortBy"
+        :currentCategory="selectedCategory"
+        :categories="categories"
+        @update-filter="setFilter"
+        @update-sort="setSortBy"
+        @update-category="setCategory"
       />
-      <font-awesome-icon :icon="['fas', 'search']" class="search-icon" />
-    </div>
 
-    <!-- Task statistics display -->
-    <div class="task-stats">
-      <div class="stat-item">
-        <span class="stat-value">{{ taskStats.total }}</span>
-        <span class="stat-label">Total</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">{{ taskStats.pending }}</span>
-        <span class="stat-label">Pending</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value">{{ taskStats.completed }}</span>
-        <span class="stat-label">Completed</span>
-      </div>
-      <div class="stat-item highlight">
-        <span class="stat-value">{{ taskStats.highPriority }}</span>
-        <span class="stat-label">High Priority</span>
-      </div>
-    </div>
-
-    <!-- Filter and sort controls -->
-    <ControlBar 
-      :currentFilter="filter"
-      :currentSort="sortBy"
-      :currentCategory="selectedCategory"
-      :categories="categories"
-      @update-filter="setFilter"
-      @update-sort="setSortBy"
-      @update-category="setCategory"
-    />
-
-    <div class="task-layout">
-      <!-- Task form section -->
-      <div class="task-form-wrapper">
-        <TaskForm
-            @add-task="addTask"
-            :taskToEdit="taskToEdit"
-            @cancel="taskToEdit = null"
-            @update-task="updateTask"
-        />
-      </div>
-
-      <!-- Task list section -->
-      <div class="task-list-wrapper">
-        <ul class="task-list">
-          <transition-group name="task">
-            <Task
-                v-for="(task, index) in filteredTasks"
-                :key="task.id || index"
-                :task="task"
-                @toggle-complete="toggleComplete"
-                @edit="editTask"
-                @delete="removeTask"
-                @dragstart="handleDragStart($event, index)"
-                @dragend="handleDragEnd"
-                @dragover.prevent
-                @drop="handleDrop($event, index)"
+      <!-- Main content area with task form and list -->
+      <div class="content-area">
+        <div class="sidebar">
+          <div class="card form-card">
+            <h2 class="section-title">Create Task</h2>
+            <TaskForm
+              @add-task="addTask"
+              :taskToEdit="taskToEdit"
+              @cancel="taskToEdit = null"
+              @update-task="updateTask"
             />
-          </transition-group>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Data import/export controls -->
-    <div class="data-controls">
-      <button @click="exportTasks" class="btn-secondary">
-        <font-awesome-icon :icon="['fas', 'download']" />
-        Export Tasks
-      </button>
-      <div>
-        <input type="file" ref="fileInput" @change="importTasks" style="display: none" accept=".json" />
-        <button @click="triggerFileInput" class="btn-secondary">
-          <font-awesome-icon :icon="['fas', 'upload']" />
-          Import Tasks
-        </button>
+          </div>
+          
+          <!-- Data controls section -->
+          <div class="card actions-card">
+            <h2 class="section-title">Actions</h2>
+            <div class="action-buttons">
+              <button @click="exportTasks" class="action-button">
+                <font-awesome-icon :icon="['fas', 'download']" />
+                <span>Export Tasks</span>
+              </button>
+              <button @click="triggerFileInput" class="action-button">
+                <font-awesome-icon :icon="['fas', 'upload']" />
+                <span>Import Tasks</span>
+              </button>
+              <input type="file" ref="fileInput" @change="importTasks" class="hidden-input" accept=".json" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- Task list area -->
+        <div class="main-content">
+          <div class="card task-card">
+            <h2 class="section-title">My Tasks</h2>
+            <div class="task-list-container">
+              <ul class="task-list" v-if="filteredTasks.length > 0">
+                <transition-group name="task-transition">
+                  <Task
+                    v-for="(task, index) in filteredTasks"
+                    :key="task.id || index"
+                    :task="task"
+                    @toggle-complete="toggleComplete"
+                    @edit="editTask"
+                    @delete="removeTask"
+                    @dragstart="handleDragStart($event, index)"
+                    @dragend="handleDragEnd"
+                    @dragover.prevent
+                    @drop="handleDrop($event, index)"
+                  />
+                </transition-group>
+              </ul>
+              <div v-else class="empty-state">
+                <font-awesome-icon :icon="['fas', 'clipboard-list']" class="empty-icon" />
+                <p class="empty-text">No tasks found. Create a new task to get started!</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -293,7 +310,7 @@ export default {
       // Load theme preference
       const darkTheme = localStorage.getItem('darkTheme') === 'true';
       if (darkTheme) {
-        document.body.classList.add('dark-theme');
+        document.querySelector('.app-container').classList.add('dark');
         isDarkTheme.value = true;
       }
       
@@ -310,10 +327,30 @@ export default {
       if (savedCategories) {
         categories.value = JSON.parse(savedCategories);
       }
+
+      // Update existing tasks to include textColor based on bgColor
+      const taskStore = useTaskStore();
+      tasks.value = tasks.value.map(task => {
+        if (!task.textColor) {
+          const colorOption = taskStore.colorOptions.find(c => c.bg === task.bgColor);
+          if (colorOption) {
+            task.textColor = colorOption.text;
+          } else {
+            // Calculate contrast for custom colors
+            const isDark = calculateLuminance(task.bgColor) <= 0.5;
+            task.textColor = isDark ? '#FFFFFF' : '#000000';
+          }
+        }
+        return task;
+      });
+      
+      // Save the updated tasks
+      saveTasks();
     });
 
     const toggleTheme = () => {
-      document.body.classList.toggle('dark-theme');
+      const appContainer = document.querySelector('.app-container');
+      appContainer.classList.toggle('dark');
       isDarkTheme.value = !isDarkTheme.value;
       localStorage.setItem('darkTheme', isDarkTheme.value);
       
@@ -384,6 +421,18 @@ export default {
       };
       reader.readAsText(file);
     };
+
+    // Helper function to calculate luminance
+    function calculateLuminance(hex) {
+      try {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      } catch (e) {
+        return 0.5;
+      }
+    }
 
     return {
       tasks,

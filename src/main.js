@@ -4,7 +4,6 @@ import App from './App.vue';
 
 // Import stylesheets in the correct order
 import './assets/base.css';
-import './styles/main.css';
 import './styles/modern-styles.css';
 
 // Font Awesome setup

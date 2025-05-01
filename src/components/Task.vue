@@ -7,7 +7,8 @@
       'light-bg': !isDarkBackground(task.bgColor)
     }"
     :style="{ 
-      backgroundColor: task.bgColor
+      backgroundColor: task.bgColor,
+      color: task.textColor || getContrastColor(task.bgColor)
     }"
     draggable="true"
     @dragstart="$emit('dragstart', $event)"
@@ -139,7 +140,7 @@ export default{
 
 <style scoped>
 .task-category-label {
-  background-color: rgba(67, 97, 238, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-full);
   font-size: 0.8rem;

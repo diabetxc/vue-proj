@@ -5,7 +5,18 @@ export const useTaskStore = defineStore('tasks', {
         tasks: [],
         filter: 'all',
         sortBy: 'date',
-        theme: 'dark'
+        theme: 'dark',
+        colorOptions: [
+            { bg: '#4361ee', text: '#ffffff', name: 'Blue' },
+            { bg: '#e63946', text: '#ffffff', name: 'Red' },
+            { bg: '#2a9d8f', text: '#ffffff', name: 'Teal' },
+            { bg: '#f77f00', text: '#ffffff', name: 'Orange' },
+            { bg: '#9381ff', text: '#ffffff', name: 'Purple' },
+            { bg: '#76c893', text: '#000000', name: 'Green' },
+            { bg: '#ffbe0b', text: '#000000', name: 'Yellow' },
+            { bg: '#ffffff', text: '#000000', name: 'White' },
+            { bg: '#2a2a2a', text: '#ffffff', name: 'Dark' },
+        ]
     }),
 
     getters: {
