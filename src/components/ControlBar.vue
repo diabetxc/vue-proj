@@ -46,6 +46,8 @@
 </template>
 
 <script>
+import { ref, onMounted, watch } from 'vue';
+
 export default {
   props: {
     currentFilter: {
@@ -64,6 +66,24 @@ export default {
       type: Array,
       default: () => []
     }
+  },
+  setup(props, { emit }) {
+    // Add watchers to handle changes in categories
+    watch(() => props.categories, (newCategories) => {
+      // If the currently selected category was removed, reset to 'All'
+      if (props.currentCategory !== 'All' && !newCategories.includes(props.currentCategory)) {
+        emit('update-category', 'All');
+      }
+    });
+    
+    // Listen for custom category update events
+    onMounted(() => {
+      window.addEventListener('categoriesUpdated', () => {
+        // The parent component will update the categories prop
+      });
+    });
+
+    return {};
   }
 }
 </script>

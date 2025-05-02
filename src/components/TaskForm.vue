@@ -183,7 +183,7 @@ export default {
     // First, initialize taskData
     const taskData = reactive({...defaultTaskData});
     const currentStep = ref(1);
-    const categories = ref(['Work', 'Personal', 'Shopping', 'Health']);
+    const categories = ref([]);
     const newCategory = ref('');
     const showNewCategoryInput = ref(false);
 
@@ -199,11 +199,23 @@ export default {
       });
       
       // Load categories
-      const savedCategories = localStorage.getItem('categories');
-      if (savedCategories) {
-        categories.value = JSON.parse(savedCategories);
-      }
+      loadCategories();
+      
+      // Add event listener for category updates
+      window.addEventListener('categoriesUpdated', loadCategories);
     });
+
+    const loadCategories = () => {
+      // Get default categories
+      const defaultCategories = ['Work', 'Personal', 'Shopping', 'Health'];
+      
+      // Get saved categories from localStorage
+      const savedCategories = localStorage.getItem('categories');
+      const customCategories = savedCategories ? JSON.parse(savedCategories) : [];
+      
+      // Combine and remove duplicates
+      categories.value = [...new Set([...defaultCategories, ...customCategories])];
+    };
 
     const progressPercent = computed(() => {
       // Each step is worth approximately 20% (100/5)
@@ -222,9 +234,15 @@ export default {
     // Watch for changes in taskToEdit prop
     watch(() => props.taskToEdit, (newValue) => {
       if (newValue) {
-        // Populate with task data for editing
-        Object.assign(taskData, newValue);
-        currentStep.value = 4; // Show all fields when editing (now 4 steps total)
+        // Make a deep copy to avoid direct mutation of props
+        Object.assign(taskData, JSON.parse(JSON.stringify(newValue)));
+        
+        // Update form UI for editing
+        currentStep.value = 5; // Show all fields when editing
+        document.querySelector('.task-form-container').scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
       }
     }, {immediate: true});
 
@@ -261,11 +279,12 @@ export default {
       });
     };
 
+    // Enhance the submitTask function to handle number conversion
     const submitTask = () => {
       const task = {
         ...taskData,
         id: editMode.value ? props.taskToEdit.id : Date.now().toString(),
-        priority: Number(taskData.priority || '2') // Default to medium (2) if not selected
+        priority: Number(taskData.priority || '2') // Convert priority to number
       };
 
       if (editMode.value) {
@@ -300,7 +319,17 @@ export default {
         if (!categories.value.includes(newCategory.value)) {
           categories.value.push(newCategory.value);
           taskData.category = newCategory.value;
-          localStorage.setItem('categories', JSON.stringify(categories.value));
+          
+          // Update localStorage
+          const savedCategories = localStorage.getItem('categories');
+          let customCategories = savedCategories ? JSON.parse(savedCategories) : [];
+          if (!customCategories.includes(newCategory.value)) {
+            customCategories.push(newCategory.value);
+            localStorage.setItem('categories', JSON.stringify(customCategories));
+            
+            // Dispatch event to notify other components
+            window.dispatchEvent(new CustomEvent('categoriesUpdated'));
+          }
         }
         newCategory.value = '';
       }

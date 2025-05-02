@@ -59,11 +59,11 @@
       <div class="content-area">
         <div class="sidebar">
           <div class="card form-card">
-            <h2 class="section-title">Create Task</h2>
+            <h2 class="section-title">{{ taskToEdit ? 'Edit Task' : 'Create Task' }}</h2>
             <TaskForm
               @add-task="addTask"
               :taskToEdit="taskToEdit"
-              @cancel="taskToEdit = null"
+              @cancel="cancelEdit"
               @update-task="updateTask"
             />
           </div>
@@ -120,7 +120,7 @@
 
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import Task from '@/components/Task.vue';
 import TaskForm from '@/components/TaskForm.vue';
 import ControlBar from '@/components/ControlBar.vue';
@@ -139,7 +139,6 @@ export default {
     const draggedTaskIndex = ref(null);
     const filter = ref('all');
     const sortBy = ref('date');
-    const categories = ref(['Work', 'Personal', 'Shopping', 'Health']);
     const selectedCategory = ref('All');
     const searchQuery = ref('');
 
@@ -173,7 +172,37 @@ export default {
     };
 
     const removeTask = (id) => {
+      const taskToRemove = tasks.value.find(task => task.id === id);
+      const categoryToCheck = taskToRemove?.category;
+      
+      // Remove the task
       tasks.value = tasks.value.filter(task => task.id !== id);
+      
+      // Check if we need to remove the category
+      if (categoryToCheck) {
+        const otherTasksWithCategory = tasks.value.some(task => task.category === categoryToCheck);
+        
+        // If no other task uses this category and it's not a default category,
+        // we could consider removing it from localStorage
+        if (!otherTasksWithCategory) {
+          // This is optional - you may want to keep categories even when unused
+          // Uncomment the below code if you want to remove orphaned categories
+          
+          /*
+          const defaultCategories = ['Work', 'Personal', 'Shopping', 'Health'];
+          if (!defaultCategories.includes(categoryToCheck)) {
+            const savedCategories = localStorage.getItem('categories');
+            if (savedCategories) {
+              let customCategories = JSON.parse(savedCategories);
+              customCategories = customCategories.filter(cat => cat !== categoryToCheck);
+              localStorage.setItem('categories', JSON.stringify(customCategories));
+              window.dispatchEvent(new CustomEvent('categoriesUpdated'));
+            }
+          }
+          */
+        }
+      }
+      
       saveTasks();
     };
 
@@ -194,7 +223,35 @@ export default {
     };
 
     const editTask = (id) => {
-      taskToEdit.value = tasks.value.find(task => task.id === id);
+      taskToEdit.value = JSON.parse(JSON.stringify(
+        tasks.value.find(task => task.id === id)
+      ));
+      
+      // Scroll to the form
+      nextTick(() => {
+        document.querySelector('.form-card').scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+        
+        // Update the section title to indicate edit mode
+        const formTitle = document.querySelector('.form-card .section-title');
+        if (formTitle) {
+          formTitle.textContent = 'Edit Task';
+        }
+      });
+    };
+    
+    // Reset the form title when canceling edit
+    const cancelEdit = () => {
+      taskToEdit.value = null;
+      // Reset form title
+      nextTick(() => {
+        const formTitle = document.querySelector('.form-card .section-title');
+        if (formTitle) {
+          formTitle.textContent = 'Create Task';
+        }
+      });
     };
 
     // Drag and drop functionality
@@ -232,10 +289,38 @@ export default {
       selectedCategory.value = newCategory;
     };
 
+    // Modified categories computation to include all categories from tasks
+    const categories = computed(() => {
+      // Start with default categories
+      const defaultCategories = ['Work', 'Personal', 'Shopping', 'Health'];
+      
+      // Get categories from local storage
+      const savedCategories = localStorage.getItem('categories');
+      let customCategories = savedCategories ? JSON.parse(savedCategories) : [];
+      
+      // Extract unique categories from tasks
+      const taskCategories = tasks.value
+        .map(task => task.category)
+        .filter(category => category && category.trim() !== '');
+      
+      // Combine all categories and remove duplicates
+      const allCategories = [...new Set([...defaultCategories, ...customCategories, ...taskCategories])];
+      
+      return allCategories;
+    });
+
+    // Update the addCategory function to also save to localStorage
     const addCategory = (newCategory) => {
       if (newCategory && !categories.value.includes(newCategory)) {
-        categories.value.push(newCategory);
-        localStorage.setItem('categories', JSON.stringify(categories.value));
+        // Get current categories from localStorage
+        const savedCategories = localStorage.getItem('categories');
+        let customCategories = savedCategories ? JSON.parse(savedCategories) : [];
+        
+        // Add new category if it doesn't exist
+        if (!customCategories.includes(newCategory)) {
+          customCategories.push(newCategory);
+          localStorage.setItem('categories', JSON.stringify(customCategories));
+        }
       }
     };
 
@@ -349,6 +434,32 @@ export default {
       saveTasks();
     });
 
+    // When tasks change, update categories in localStorage
+    watch(tasks, () => {
+      // Extract unique categories from tasks
+      const taskCategories = tasks.value
+        .map(task => task.category)
+        .filter(category => category && category.trim() !== '');
+      
+      // Get current custom categories
+      const savedCategories = localStorage.getItem('categories');
+      let customCategories = savedCategories ? JSON.parse(savedCategories) : [];
+      
+      // Add any task categories not already in custom categories
+      let changed = false;
+      taskCategories.forEach(category => {
+        if (!customCategories.includes(category)) {
+          customCategories.push(category);
+          changed = true;
+        }
+      });
+      
+      // Save if changes were made
+      if (changed) {
+        localStorage.setItem('categories', JSON.stringify(customCategories));
+      }
+    }, { deep: true });
+
     const toggleTheme = () => {
       const appContainer = document.querySelector('.app-container');
       appContainer.classList.toggle('dark');
@@ -443,6 +554,7 @@ export default {
       removeTask,
       toggleComplete,
       editTask,
+      cancelEdit,
       handleDragStart,
       handleDragEnd,
       handleDrop,
