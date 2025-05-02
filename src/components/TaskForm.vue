@@ -72,7 +72,10 @@
                 v-for="color in colorOptions" 
                 :key="color.bg"
                 class="color-option"
-                :class="{ selected: taskData.bgColor === color.bg }"
+                :class="{ 
+                  selected: taskData.bgColor === color.bg,
+                  [`color-${color.name.toLowerCase()}`]: true
+                }"
                 :style="{ backgroundColor: color.bg }"
                 @click="selectColor(color)"
               >
@@ -466,6 +469,8 @@ select {
   gap: 10px;
 }
 
+
+
 .color-option {
   width: 36px;
   height: 36px;
@@ -481,6 +486,14 @@ select {
 
 .color-option:hover {
   transform: scale(1.1);
+}
+
+.color-option.color-dark {
+  color: white;
+}
+
+.color-option.color-white {
+  color: black;
 }
 
 .color-option.selected {
@@ -501,6 +514,8 @@ select {
   flex: 1;
   min-width: 200px;
 }
+
+
 
 /* Keep your existing styles too */
 </style>

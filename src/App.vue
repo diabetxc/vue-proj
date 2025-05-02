@@ -124,6 +124,7 @@ import { ref, onMounted, computed } from 'vue';
 import Task from '@/components/Task.vue';
 import TaskForm from '@/components/TaskForm.vue';
 import ControlBar from '@/components/ControlBar.vue';
+import { useTaskStore } from './stores/taskStore.js';
 
 export default {
   name: 'App',

@@ -1,14 +1,11 @@
 <template>
   <div
     class="task-item"
-    :class="{ 
-      completed: task.completed, 
-      'dark-bg': isDarkBackground(task.bgColor),
-      'light-bg': !isDarkBackground(task.bgColor)
-    }"
+    :class="[
+      `color-${task.colorName?.toLowerCase() || getColorNameByBg(task.bgColor)}`
+    ]"
     :style="{ 
-      backgroundColor: task.bgColor,
-      color: task.textColor || getContrastColor(task.bgColor)
+      backgroundColor: task.bgColor
     }"
     draggable="true"
     @dragstart="$emit('dragstart', $event)"
@@ -133,6 +130,22 @@ export default{
     formatDate(dateString){
       const date = new Date(dateString);
       return date.toLocaleDateString();
+    },
+    getColorNameByBg(bgColor) {
+      // This should match the taskStore.colorOptions mapping
+      const colorMap = {
+        '#4361ee': 'blue',
+        '#e63946': 'red',
+        '#2a9d8f': 'teal',
+        '#f77f00': 'orange',
+        '#9381ff': 'purple',
+        '#76c893': 'green',
+        '#ffbe0b': 'yellow',
+        '#ffffff': 'white',
+        '#2a2a2a': 'dark',
+      };
+      
+      return colorMap[bgColor] || 'default';
     }
   }
 }
@@ -154,44 +167,9 @@ body.dark-theme .task-category-label {
   background-color: rgba(67, 97, 238, 0.2);
 }
 
-/* Improve visibility on dark backgrounds */
-.dark-bg .task-category-label {
-  background-color: rgba(67, 97, 238, 0.3);
-}
-
-/* Force text colors based on background darkness */
-.dark-bg.task-item,
-.dark-bg .task-title,
-.dark-bg .task-description,
-.dark-bg .task-body p,
-.dark-bg .task-footer,
-.dark-bg .task-date {
-  color: #FFFFFF !important;
-}
-
-.light-bg.task-item,
-.light-bg .task-title,
-.light-bg .task-description,
-.light-bg .task-body p,
-.light-bg .task-footer,
-.light-bg .task-date {
-  color: #000000 !important;
-}
-
-/* Improve visibility for task categories */
-.light-bg .task-category-label {
-  color: var(--primary) !important;
-  background-color: rgba(67, 97, 238, 0.1);
-  font-weight: 600;
-}
-
-.dark-bg .task-category-label {
-  color: white !important;
-  background-color: rgba(67, 97, 238, 0.4);
-}
 
 /* Ensure task description text is visible */
 .task-body p {
-  color: inherit !important;
+  color: inherit important;
 }
 </style>
